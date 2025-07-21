@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BD LOAN - আপনার লোন সমাধান</title>
+    <style>
+        body {
+            font-family: 'Kalpurush', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 70px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-primary {
+            background-color: #10B981;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #EF4444;
+            color: white;
+        }
+        .btn-link {
+            background: none;
+            border: none;
+            color: #3B82F6;
+            text-decoration: underline;
+            padding: 0;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .hidden {
+            display: none;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .nav-item {
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .loan-details {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .transaction-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            z-index: 1001;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 80px; opacity: 1; }
+        }
+        @keyframes fadeout {
+            from { bottom: 80px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
+        .admin-nav {
+            display: flex;
+            justify-content: space-around;
+            background: #1e40af;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        .admin-nav-item {
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 35px;
+            cursor: pointer;
+        }
+        /* Added new styles for secure admin */
+        .login-attempts {
+            color: #EF4444;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .session-timeout {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #1e40af;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 1002;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Navigation - Updated with secure functions -->
+    <div class="admin-nav hidden" id="adminNav">
+        <div class="admin-nav-item" onclick="secureShowAdminDashboard()">
+            ড্যাশবোর্ড
+        </div>
+        <div class="admin-nav-item" onclick="secureShowPendingLoans()">
+            লোন অনুমোদন
+        </div>
+        <div class="admin-nav-item" onclick="secureShowPaymentSettings()">
+            পেমেন্ট সেটিংস
+        </div>
+        <div class="admin-nav-item" onclick="logoutAdmin()">
+            লগআউট
+        </div>
+    </div>
+
+    <!-- User Navigation -->
+    <div class="nav hidden" id="userNav">
+        <div class="nav-item" onclick="showUserHome()">
+            হোম
+        </div>
+        <div class="nav-item" onclick="showLoanApplication()">
+            লোন নিন
+        </div>
+        <div class="nav-item" onclick="showTransactions()">
+            লেনদেন
+        </div>
+        <div class="nav-item" onclick="logoutUser()">
+            লগআউট
+        </div>
+    </div>
+
+    <!-- Session timeout display -->
+    <div id="sessionTimeout" class="session-timeout hidden">
+        সেশন শেষ হবে: <span id="timeoutCounter">05:00</span>
+    </div>
+
+    <div class="container">
+        <!-- Login Selection -->
+        <div id="loginSelection" class="card">
+            <h2>লগিন নির্বাচন করুন</h2>
+            <button class="btn btn-primary" onclick="showUserLogin()">ব্যবহারকারী লগিন</button>
+            <button class="btn btn-secondary" onclick="showUserRegister()">রেজিস্ট্রেশন</button>
+            <button class="btn btn-secondary" onclick="showAdminLogin()">অ্যাডমিন লগিন</button>
+        </div>
+
+        <!-- User Registration Section -->
+        <div id="userRegisterSection" class="card hidden">
+            <h2>নতুন অ্যাকাউন্ট তৈরি করুন</h2>
+            <div class="form-group">
+                <label for="regPhone">মোবাইল নম্বর</label>
+                <input type="tel" id="regPhone" placeholder="01XXXXXXXXX">
+            </div>
+            <div class="form-group">
+                <label for="regName">পূর্ণ নাম</label>
+                <input type="text" id="regName" placeholder="আপনার পূর্ণ নাম">
+            </div>
+            <div class="form-group">
+                <label for="regPassword">পাসওয়ার্ড</label>
+                <div style="position: relative;">
+                    <input type="password" id="regPassword" placeholder="পাসওয়ার্ড">
+                    <span class="password-toggle" onclick="togglePassword('regPassword')">👁️</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="regConfirmPassword">পাসওয়ার্ড নিশ্চিত করুন</label>
+                <div style="position: relative;">
+                    <input type="password" id="regConfirmPassword" placeholder="পাসওয়ার্ড নিশ্চিত করুন">
+                    <span class="password-toggle" onclick="togglePassword('regConfirmPassword')">👁️</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="registerUser()">রেজিস্টার করুন</button>
+            <button class="btn btn-secondary" onclick="showLoginSelection()">পিছনে যান</button>
+        </div>
+
+        <!-- User Login Section -->
+        <div id="userLoginSection" class="card hidden">
+            <h2>ব্যবহারকারী লগিন</h2>
+            <div class="form-group">
+                <label for="loginPhone">মোবাইল নম্বর</label>
+                <input type="tel" id="loginPhone" placeholder="01XXXXXXXXX">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">পাসওয়ার্ড</label>
+                <div style="position: relative;">
+                    <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড">
+                    <span class="password-toggle" onclick="togglePassword('loginPassword')">👁️</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="loginUser()">লগিন করুন</button>
+            <button class="btn btn-link" onclick="showForgotPassword()">পাসওয়ার্ড ভুলে গেছেন?</button>
+            <button class="btn btn-secondary" onclick="showLoginSelection()">পিছনে যান</button>
+        </div>
+
+        <!-- Forgot Password Section -->
+        <div id="forgotPasswordSection" class="card hidden">
+            <h2>পাসওয়ার্ড রিসেট</h2>
+            <div class="form-group">
+                <label for="resetPhone">মোবাইল নম্বর</label>
+                <input type="tel" id="resetPhone" placeholder="01XXXXXXXXX">
+            </div>
+            <button class="btn btn-primary" onclick="sendResetOTP()">OTP পাঠান</button>
+            <div id="resetOtpSection" class="form-group hidden">
+                <label for="resetOtp">OTP কোড</label>
+                <input type="text" id="resetOtp" placeholder="OTP কোড লিখুন">
+                <div class="form-group">
+                    <label for="newPassword">নতুন পাসওয়ার্ড</label>
+                    <div style="position: relative;">
+                        <input type="password" id="newPassword" placeholder="নতুন পাসওয়ার্ড">
+                        <span class="password-toggle" onclick="togglePassword('newPassword')">👁️</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="resetPassword()">পাসওয়ার্ড রিসেট করুন</button>
+            </div>
+            <button class="btn btn-secondary" onclick="showUserLogin()">পিছনে যান</button>
+        </div>
+
+        <!-- Admin Login Section - Updated with security features -->
+        <div id="adminLoginSection" class="card hidden">
+            <h2>অ্যাডমিন লগিন</h2>
+            <div class="form-group">
+                <label for="adminUsername">ইউজারনেম</label>
+                <input type="text" id="adminUsername" placeholder="অ্যাডমিন ইউজারনেম">
+            </div>
+            <div class="form-group">
+                <label for="adminPassword">পাসওয়ার্ড</label>
+                <div style="position: relative;">
+                    <input type="password" id="adminPassword" placeholder="অ্যাডমিন পাসওয়ার্ড">
+                    <span class="password-toggle" onclick="togglePassword('adminPassword')">👁️</span>
+                </div>
+                <div id="loginAttempts" class="login-attempts hidden"></div>
+            </div>
+            <button class="btn btn-primary" onclick="loginAdmin()">লগিন করুন</button>
+            <button class="btn btn-secondary" onclick="showLoginSelection()">পিছনে যান</button>
+        </div>
+
+        <!-- User Home Section -->
+        <div id="userHomeSection" class="card hidden">
+            <h2>আপনার অ্যাকাউন্ট</h2>
+            <div class="loan-details">
+                <h3 id="userNameDisplay"></h3>
+                <p>মোবাইল: <span id="userPhoneDisplay"></span></p>
+                <p>বর্তমান ব্যালেন্স: <span id="userBalance"></span></p>
+            </div>
+            
+            <h3>দ্রুত লোন আবেদন</h3>
+            <button class="btn btn-primary" onclick="showLoanApplication()">লোন আবেদন করুন</button>
+            
+            <h3>আপনার সক্রিয় লোন</h3>
+            <div id="userActiveLoans"></div>
+        </div>
+
+        <!-- Loan Application Section -->
+        <div id="loanApplicationSection" class="card hidden">
+            <h2>লোন আবেদন</h2>
+            <div class="form-group">
+                <label for="loanAmount">লোনের পরিমাণ (৳)</label>
+                <input type="number" id="loanAmount" placeholder="500-50000">
+            </div>
+            <div class="form-group">
+                <label for="loanDuration">লোনের মেয়াদ (দিন)</label>
+                <select id="loanDuration">
+                    <option value="7">7 দিন</option>
+                    <option value="14">14 দিন</option>
+                    <option value="30">30 দিন</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="loanPurpose">লোনের উদ্দেশ্য</label>
+                <textarea id="loanPurpose" placeholder="লোনের উদ্দেশ্য লিখুন"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="applyLoan()">আবেদন জমা দিন</button>
+            <button class="btn btn-secondary" onclick="showUserHome()">বাতিল করুন</button>
+        </div>
+
+        <!-- Transactions Section -->
+        <div id="transactionsSection" class="card hidden">
+            <h2>আপনার লেনদেন</h2>
+            <div id="transactionsList">
+                <!-- Transactions will be listed here -->
+            </div>
+            <button class="btn btn-secondary" onclick="showUserHome()">হোমে ফিরে যান</button>
+        </div>
+
+        <!-- Admin Dashboard Section -->
+        <div id="adminDashboardSection" class="card hidden">
+            <h2>অ্যাডমিন ড্যাশবোর্ড</h2>
+            <div class="loan-details">
+                <h3>সিস্টেম পরিসংখ্যান</h3>
+                <p>মোট ব্যবহারকারী: <span id="totalUsers">0</span></p>
+                <p>সক্রিয় লোন: <span id="activeLoans">0</span></p>
+                <p>অনুমোদনের জন্য লোন: <span id="pendingLoans">0</span></p>
+            </div>
+        </div>
+
+        <!-- Pending Loans Section -->
+        <div id="pendingLoansSection" class="card hidden">
+            <h2>অনুমোদনের জন্য লোন</h2>
+            <div id="pendingLoansList">
+                <!-- Pending loans will be listed here -->
+            </div>
+        </div>
+
+        <!-- Payment Settings Section -->
+        <div id="paymentSettingsSection" class="card hidden">
+            <h2>পেমেন্ট সেটিংস</h2>
+            <div class="form-group">
+                <label for="bkashNumber">বিকাশ নম্বর</label>
+                <input type="text" id="bkashNumber" placeholder="বিকাশ নম্বর">
+            </div>
+            <div class="form-group">
+                <label for="nogodNumber">নগদ নম্বর</label>
+                <input type="text" id="nogodNumber" placeholder="নগদ নম্বর">
+            </div>
+            <button class="btn btn-primary" onclick="savePaymentSettings()">সেটিংস সংরক্ষণ করুন</button>
+        </div>
+    </div>
+
+    <script>
+        // Demo data with passwords
+        let users = [
+            { 
+                phone: "01911276328", 
+                name: "ডেমো ব্যবহারকারী", 
+                password: "demo123", // In real app, store hashed passwords
+                balance: 1000, 
+                loans: [],
+                transactions: []
+            }
+        ];
+        
+        let pendingLoans = [];
+        let approvedLoans = [];
+        
+        let paymentSettings = {
+            bkash: "01911276328",
+            nogod: "01711223344"
+        };
+        
+        // Enhanced admin credentials (in real app, store hashed passwords server-side)
+        const ADMIN_CREDENTIALS = {
+            username: "admin",
+            // This should be a hashed password in production
+            password: "Admin@Secure123!" // Strong password example
+        };
+
+        // Security variables
+        let failedLoginAttempts = 0;
+        const MAX_LOGIN_ATTEMPTS = 5;
+        const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
+        let lockoutUntil = 0;
+        let sessionTimeout;
+        const SESSION_DURATION = 5 * 60 * 1000; // 5 minutes
+        let currentOTP = null;
+        let currentUser = null;
+        let isAdmin = false;
+        let otpAttempts = 0;
+        const MAX_OTP_ATTEMPTS = 3;
+
+        // Hide all sections
+        function hideAllSections() {
+            const sections = document.querySelectorAll('.container > .card');
+            sections.forEach(section => {
+                section.classList.add('hidden');
+            });
+        }
+
+        // Show toast message
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.backgroundColor = isError ? '#EF4444' : '#10B981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        // Show login selection
+        function showLoginSelection() {
+            hideAllSections();
+            document.getElementById('loginSelection').classList.remove('hidden');
+            document.getElementById('userNav').classList.add('hidden');
+            document.getElementById('adminNav').classList.add('hidden');
+            document.getElementById('sessionTimeout').classList.add('hidden');
+            currentUser = null;
+            isAdmin = false;
+        }
+
+        // Show user registration form
+        function showUserRegister() {
+            hideAllSections();
+            document.getElementById('userRegisterSection').classList.remove('hidden');
+            // Clear form fields
+            document.getElementById('regPhone').value = '';
+            document.getElementById('regName').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirmPassword').value = '';
+        }
+
+        // Register new user
+        function registerUser() {
+            const phone = document.getElementById('regPhone').value;
+            const name = document.getElementById('regName').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            if (!phone || !name || !password || !confirmPassword) {
+                showToast('সমস্ত তথ্য পূরণ করুন', true);
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showToast('পাসওয়ার্ড মেলেনি', true);
+                return;
+            }
+            
+            if (users.some(u => u.phone === phone)) {
+                showToast('এই নম্বর দিয়ে ইতিমধ্যে রেজিস্ট্রেশন করা হয়েছে', true);
+                return;
+            }
+            
+            // In real app, hash the password before storing
+            const newUser = {
+                phone,
+                name,
+                password,
+                balance: 0,
+                loans: [],
+                transactions: []
+            };
+            
+            users.push(newUser);
+            showToast('রেজিস্ট্রেশন সফল! এখন লগিন করুন');
+            showUserLogin();
+        }
+
+        // Show user login form
+        function showUserLogin() {
+            hideAllSections();
+            document.getElementById('userLoginSection').classList.remove('hidden');
+            // Clear form fields
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        // User login
+        function loginUser() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const user = users.find(u => u.phone === phone);
+            
+            if (!user) {
+                showToast('ব্যবহারকারী পাওয়া যায়নি', true);
+                return;
+            }
+            
+            if (user.password !== password) { // In real app, compare hashed passwords
+                showToast('ভুল পাসওয়ার্ড', true);
+                return;
+            }
+            
+            currentUser = user;
+            isAdmin = false;
+            
+            document.getElementById('userNameDisplay').textContent = currentUser.name;
+            document.getElementById('userPhoneDisplay').textContent = currentUser.phone;
+            document.getElementById('userBalance').textContent = '৳' + currentUser.balance;
+            
+            document.getElementById('userNav').classList.remove('hidden');
+            showUserHome();
+            showToast('লগিন সফল');
+        }
+
+        // Show forgot password form
+        function showForgotPassword() {
+            hideAllSections();
+            document.getElementById('forgotPasswordSection').classList.remove('hidden');
+            document.getElementById('resetOtpSection').classList.add('hidden');
+            // Clear form fields
+            document.getElementById('resetPhone').value = '';
+            document.getElementById('resetOtp').value = '';
+            document.getElementById('newPassword').value = '';
+        }
+
+        // Send OTP for password reset
+        function sendResetOTP() {
+            const phone = document.getElementById('resetPhone').value;
+            
+            if (!users.some(u => u.phone === phone)) {
+                showToast('এই নম্বর দিয়ে কোনো অ্যাকাউন্ট নেই', true);
+                return;
+            }
+            
+            currentOTP = generateOTP();
+            otpAttempts = 0;
+            
+            // In real app, send this OTP via SMS
+            console.log(`Reset OTP for ${phone}: ${currentOTP}`);
+            alert(`ডেমো: আপনার পাসওয়ার্ড রিসেট OTP: ${currentOTP}`);
+            
+            document.getElementById('resetOtpSection').classList.remove('hidden');
+            showToast('OTP পাঠানো হয়েছে');
+        }
+
+        // Generate a random 4-digit OTP
+        function generateOTP() {
+            return Math.floor(1000 + Math.random() * 9000);
+        }
+
+        // Reset password with OTP verification
+        function resetPassword() {
+            const enteredOTP = document.getElementById('resetOtp').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const phone = document.getElementById('resetPhone').value;
+            
+            if (!enteredOTP || !newPassword) {
+                showToast('সমস্ত তথ্য পূরণ করুন', true);
+                return;
+            }
+            
+            if (parseInt(enteredOTP) !== currentOTP) {
+                otpAttempts++;
+                if (otpAttempts >= MAX_OTP_ATTEMPTS) {
+                    showToast('অনেকবার ভুল OTP দেওয়ার কারণে প্রক্রিয়া বাতিল', true);
+                    showUserLogin();
+                    return;
+                }
+                showToast('ভুল OTP কোড', true);
+                return;
+            }
+            
+            const user = users.find(u => u.phone === phone);
+            if (user) {
+                // In real app, hash the password before storing
+                user.password = newPassword;
+                showToast('পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে');
+                showUserLogin();
+            }
+        }
+
+        // Show admin login form
+        function showAdminLogin() {
+            hideAllSections();
+            document.getElementById('adminLoginSection').classList.remove('hidden');
+            // Clear form fields
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginAttempts').classList.add('hidden');
+        }
+
+        // Enhanced admin login function
+        function loginAdmin() {
+            // Check if account is locked
+            if (Date.now() < lockoutUntil) {
+                const remaining = Math.ceil((lockoutUntil - Date.now()) / 60000);
+                showToast(`অ্যাকাউন্ট লক করা হয়েছে। ${remaining} মিনিট পরে আবার চেষ্টা করুন`, true);
+                return;
+            }
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (!username || !password) {
+                showToast('ইউজারনেম এবং পাসওয়ার্ড পূরণ করুন', true);
+                return;
+            }
+            
+            // In real app, compare hashed passwords
+            if (username === ADMIN_CREDENTIALS.username && 
+                password === ADMIN_CREDENTIALS.password) {
+                
+                // Reset failed attempts
+                failedLoginAttempts = 0;
+                document.getElementById('loginAttempts').classList.add('hidden');
+                
+                // Set admin session
+                isAdmin = true;
+                currentUser = null;
+                document.getElementById('adminNav').classList.remove('hidden');
+                document.getElementById('userNav').classList.add('hidden');
+                
+                // Start session timeout
+                startSessionTimer();
+                
+                showAdminDashboard();
+                showToast('অ্যাডমিন লগিন সফল');
+            } else {
+                failedLoginAttempts++;
+                
+                // Show remaining attempts
+                const attemptsLeft = MAX_LOGIN_ATTEMPTS - failedLoginAttempts;
+                const attemptsMsg = `ভুল ইউজারনেম/পাসওয়ার্ড। ${attemptsLeft} বার চেষ্টা বাকি`;
+                document.getElementById('loginAttempts').textContent = attemptsMsg;
+                document.getElementById('loginAttempts').classList.remove('hidden');
+                
+                if (failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+                    // Lock the account
+                    lockoutUntil = Date.now() + LOCKOUT_TIME;
+                    showToast('অনেকবার ভুল চেষ্টার কারণে অ্যাকাউন্ট লক করা হয়েছে', true);
+                } else {
+                    showToast('ভুল ইউজারনেম বা পাসওয়ার্ড', true);
+                }
+            }
+        }
+        
+        // Session management
+        function startSessionTimer() {
+            // Show timeout counter
+            document.getElementById('sessionTimeout').classList.remove('hidden');
+            updateTimeoutDisplay(SESSION_DURATION);
+            
+            // Clear any existing timeout
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            
+            // Set new timeout
+            sessionTimeout = setTimeout(() => {
+                logoutAdmin();
+                showToast('সেশন সময় শেষ হয়ে গেছে। আবার লগিন করুন', true);
+            }, SESSION_DURATION);
+            
+            // Update display every second
+            let remaining = SESSION_DURATION;
+            const interval = setInterval(() => {
+                remaining -= 1000;
+                updateTimeoutDisplay(remaining);
+                
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+            
+            // Reset timer on activity
+            document.addEventListener('click', resetSessionTimer);
+            document.addEventListener('keypress', resetSessionTimer);
+        }
+        
+        function updateTimeoutDisplay(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            document.getElementById('timeoutCounter').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function resetSessionTimer() {
+            startSessionTimer(); // Restart the timer
+        }
+
+        // Secure admin dashboard show function
+        function secureShowAdminDashboard() {
+            if (!isAdmin) {
+                showToast('অনুগ্রহ করে প্রথমে অ্যাডমিন হিসাবে লগিন করুন', true);
+                showAdminLogin();
+                return;
+            }
+            showAdminDashboard();
+        }
+
+        // Secure pending loans show function
+        function secureShowPendingLoans() {
+            if (!isAdmin) {
+                showToast('অনুগ্রহ করে প্রথমে অ্যাডমিন হিসাবে লগিন করুন', true);
+                showAdminLogin();
+                return;
+            }
+            showPendingLoans();
+        }
+
+        // Secure payment settings show function
+        function secureShowPaymentSettings() {
+            if (!isAdmin) {
+                showToast('অনুগ্রহ করে প্রথমে অ্যাডমিন হিসাবে লগিন করুন', true);
+                showAdminLogin();
+                return;
+            }
+            showPaymentSettings();
+        }
+
+        // Show admin dashboard
+        function showAdminDashboard() {
+            hideAllSections();
+            document.getElementById('adminDashboardSection').classList.remove('hidden');
+            
+            // Update stats
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('activeLoans').textContent = approvedLoans.length;
+            document.getElementById('pendingLoans').textContent = pendingLoans.length;
+        }
+
+        // Show user home
+        function showUserHome() {
+            hideAllSections();
+            document.getElementById('userHomeSection').classList.remove('hidden');
+            
+            // Update user info
+            document.getElementById('userNameDisplay').textContent = currentUser.name;
+            document.getElementById('userPhoneDisplay').textContent = currentUser.phone;
+            document.getElementById('userBalance').textContent = '৳' + currentUser.balance;
+            
+            // Show active loans
+            const activeLoansDiv = document.getElementById('userActiveLoans');
+            activeLoansDiv.innerHTML = '';
+            
+            if (currentUser.loans.length === 0) {
+                activeLoansDiv.innerHTML = '<p>আপনার কোনো সক্রিয় লোন নেই</p>';
+            } else {
+                currentUser.loans.forEach(loan => {
+                    const loanDiv = document.createElement('div');
+                    loanDiv.className = 'loan-details';
+                    loanDiv.innerHTML = `
+                        <p>লোন পরিমাণ: ৳${loan.amount}</p>
+                        <p>মেয়াদ: ${loan.duration} দিন</p>
+                        <p>স্ট্যাটাস: ${loan.approved ? 'অনুমোদিত' : 'অনুমোদনের অপেক্ষায়'}</p>
+                        ${loan.approved ? `<p>পরিশোধের তারিখ: ${new Date(loan.dueDate).toLocaleDateString()}</p>` : ''}
+                    `;
+                    activeLoansDiv.appendChild(loanDiv);
+                });
+            }
+        }
+
+        // Show loan application form
+        function showLoanApplication() {
+            hideAllSections();
+            document.getElementById('loanApplicationSection').classList.remove('hidden');
+            // Clear form fields
+            document.getElementById('loanAmount').value = '';
+            document.getElementById('loanPurpose').value = '';
+        }
+
+        // Apply for a loan
+        function applyLoan() {
+            const amount = parseInt(document.getElementById('loanAmount').value);
+            const duration = parseInt(document.getElementById('loanDuration').value);
+            const purpose = document.getElementById('loanPurpose').value;
+            
+            if (!amount || amount < 500 || amount > 50000) {
+                showToast('অবশ্যই ৳500 থেকে ৳50,000 এর মধ্যে লোন নিতে হবে', true);
+                return;
+            }
+            
+            if (!purpose) {
+                showToast('লোনের উদ্দেশ্য লিখুন', true);
+                return;
+            }
+            
+            const newLoan = {
+                id: Date.now(),
+                amount,
+                duration,
+                purpose,
+                approved: false,
+                appliedDate: new Date()
+            };
+            
+            // Add to user's loans
+            currentUser.loans.push(newLoan);
+            
+            // Add to pending loans for admin approval
+            pendingLoans.push({
+                ...newLoan,
+                userId: currentUser.phone,
+                userName: currentUser.name
+            });
+            
+            // Add transaction record
+            currentUser.transactions.push({
+                type: 'loan_application',
+                amount,
+                date: new Date(),
+                description: `লোন আবেদন (${purpose})`
+            });
+            
+            showToast('লোন আবেদন সফলভাবে জমা হয়েছে');
+            showUserHome();
+        }
+
+        // Show transactions
+        function showTransactions() {
+            hideAllSections();
+            document.getElementById('transactionsSection').classList.remove('hidden');
+            
+            const transactionsList = document.getElementById('transactionsList');
+            transactionsList.innerHTML = '';
+            
+            if (currentUser.transactions.length === 0) {
+                transactionsList.innerHTML = '<p>কোনো লেনদেন পাওয়া যায়নি</p>';
+            } else {
+                currentUser.transactions.forEach(transaction => {
+                    const transactionDiv = document.createElement('div');
+                    transactionDiv.className = 'transaction-item';
+                    transactionDiv.innerHTML = `
+                        <p><strong>${transaction.description}</strong></p>
+                        <p>পরিমাণ: ৳${transaction.amount}</p>
+                        <p>তারিখ: ${new Date(transaction.date).toLocaleString()}</p>
+                    `;
+                    transactionsList.appendChild(transactionDiv);
+                });
+            }
+        }
+
+        // Show pending loans for admin approval
+        function showPendingLoans() {
+            hideAllSections();
+            document.getElementById('pendingLoansSection').classList.remove('hidden');
+            
+            const pendingLoansList = document.getElementById('pendingLoansList');
+            pendingLoansList.innerHTML = '';
+            
+            if (pendingLoans.length === 0) {
+                pendingLoansList.innerHTML = '<p>অনুমোদনের জন্য কোনো লোন নেই</p>';
+            } else {
+                pendingLoans.forEach((loan, index) => {
+                    const loanDiv = document.createElement('div');
+                    loanDiv.className = 'loan-details';
+                    loanDiv.innerHTML = `
+                        <h3>${loan.userName} (${loan.userId})</h3>
+                        <p>লোন পরিমাণ: ৳${loan.amount}</p>
+                        <p>মেয়াদ: ${loan.duration} দিন</p>
+                        <p>উদ্দেশ্য: ${loan.purpose}</p>
+                        <p>আবেদনের তারিখ: ${new Date(loan.appliedDate).toLocaleDateString()}</p>
+                        <button class="btn btn-primary" onclick="approveLoan(${index})">অনুমোদন করুন</button>
+                        <button class="btn btn-danger" onclick="rejectLoan(${index})">প্রত্যাখ্যান করুন</button>
+                    `;
+                    pendingLoansList.appendChild(loanDiv);
+                });
+            }
+        }
+
+        // Approve a loan
+        function approveLoan(index) {
+            const loan = pendingLoans[index];
+            
+            // Find the user
+            const user = users.find(u => u.phone === loan.userId);
+            if (user) {
+                // Update the loan status in user's loans
+                const userLoan = user.loans.find(l => l.id === loan.id);
+                if (userLoan) {
+                    userLoan.approved = true;
+                    userLoan.dueDate = new Date(Date.now() + loan.duration * 24 * 60 * 60 * 1000);
+                    
+                    // Add to approved loans
+                    approvedLoans.push(loan);
+                    
+                    // Add transaction record
+                    user.transactions.push({
+                        type: 'loan_approved',
+                        amount: loan.amount,
+                        date: new Date(),
+                        description: `লোন অনুমোদিত (${loan.purpose})`
+                    });
+                    
+                    // Update user balance
+                    user.balance += loan.amount;
+                }
+            }
+            
+            // Remove from pending loans
+            pendingLoans.splice(index, 1);
+            
+            showToast('লোন অনুমোদন করা হয়েছে');
+            showPendingLoans();
+        }
+
+        // Reject a loan
+        function rejectLoan(index) {
+            const loan = pendingLoans[index];
+            
+            // Find the user
+            const user = users.find(u => u.phone === loan.userId);
+            if (user) {
+                // Remove the loan from user's loans
+                user.loans = user.loans.filter(l => l.id !== loan.id);
+                
+                // Add transaction record
+                user.transactions.push({
+                    type: 'loan_rejected',
+                    amount: loan.amount,
+                    date: new Date(),
+                    description: `লোন প্রত্যাখ্যাত (${loan.purpose})`
+                });
+            }
+            
+            // Remove from pending loans
+            pendingLoans.splice(index, 1);
+            
+            showToast('লোন প্রত্যাখ্যান করা হয়েছে');
+            showPendingLoans();
+        }
+
+        // Show payment settings
+        function showPaymentSettings() {
+            hideAllSections();
+            document.getElementById('paymentSettingsSection').classList.remove('hidden');
+            
+            // Set current values
+            document.getElementById('bkashNumber').value = paymentSettings.bkash;
+            document.getElementById('nogodNumber').value = paymentSettings.nogod;
+        }
+
+        // Save payment settings
+        function savePaymentSettings() {
+            paymentSettings.bkash = document.getElementById('bkashNumber').value;
+            paymentSettings.nogod = document.getElementById('nogodNumber').value;
+            
+            showToast('পেমেন্ট সেটিংস সংরক্ষণ করা হয়েছে');
+            showAdminDashboard();
+        }
+
+        // Enhanced logout
+        function logoutAdmin() {
+            isAdmin = false;
+            document.getElementById('adminNav').classList.add('hidden');
+            document.getElementById('sessionTimeout').classList.add('hidden');
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            showLoginSelection();
+            showToast('অ্যাডমিন লগআউট সফল');
+            
+            // Remove event listeners
+            document.removeEventListener('click', resetSessionTimer);
+            document.removeEventListener('keypress', resetSessionTimer);
+        }
+
+        // Logout user
+        function logoutUser() {
+            currentUser = null;
+            showLoginSelection();
+            showToast('লগআউট সফল');
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoginSelection();
+        });
+    </script>
+</body>
+</html>
